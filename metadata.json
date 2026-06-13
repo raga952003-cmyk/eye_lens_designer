@@ -1,0 +1,6 @@
+{
+  "name": "Eluno AI OMS",
+  "description": "Predictive Eyewear Fulfillment and SLA Order Management System with automated material checking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
