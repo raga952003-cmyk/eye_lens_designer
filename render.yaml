@@ -1,0 +1,36 @@
+services:
+  # Backend API Service
+  - type: web
+    name: eluno-oms-backend
+    runtime: python
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: eluno-oms-db
+          property: connectionString
+      - key: GEMINI_API_KEY
+        sync: false
+    healthCheckPath: /
+    autoDeploy: true
+
+  # Frontend Static Site
+  - type: web
+    name: eluno-oms-frontend
+    runtime: node
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: VITE_API_URL
+        value: https://eluno-oms-backend.onrender.com/api
+    autoDeploy: true
+
+databases:
+  - name: eluno-oms-db
+    plan: free
+    databaseName: eluno_oms
+    user: eluno_user
