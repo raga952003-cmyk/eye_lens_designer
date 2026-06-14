@@ -2,94 +2,125 @@
 
 Your service is at: https://eye-lens-designer.onrender.com
 
-## Current Issue: 503 Service Unavailable
+## Current Issue: Build Failed - requirements.txt not found
 
-This typically means:
-1. Service is still building/deploying (wait 5-10 minutes)
-2. Build failed (check logs)
-3. Start command is incorrect
-4. Missing environment variables
+**Root Cause**: Render is looking for requirements.txt in the root directory instead of the `backend/` folder.
 
 ---
 
-## Step-by-Step Fix
+## SOLUTION: Update Render Service Settings
 
-### 1. Check Your Render Dashboard
+### Step 1: Go to Render Dashboard
 
-1. Go to: https://dashboard.render.com
-2. Click on your service: `eye-lens-designer`
-3. Go to **"Logs"** tab to see what's failing
+1. Visit: https://dashboard.render.com
+2. Click on your service: **"eye-lens-designer"**
+3. Go to **"Settings"** tab
 
-### 2. Verify Service Settings
+### Step 2: Update Root Directory ⚠️ CRITICAL
 
-Click on your service → **"Settings"** tab:
+**Find "Root Directory" setting:**
+- Current value: (empty or wrong)
+- **Change to**: `backend`
+- Click **"Save Changes"**
 
-**Build & Deploy:**
-- **Root Directory**: `backend`
-- **Build Command**: `pip install --upgrade pip && pip install -r requirements.txt`
-- **Start Command**: `python -m uvicorn main:app --host 0.0.0.0 --port $PORT`
+This tells Render to look for files inside the backend folder!
+
+### Step 3: Verify Build Command
+
+**Build Command should be:**
+```
+pip install --upgrade pip && pip install -r requirements.txt
+```
+
+### Step 4: Verify Start Command
+
+**Start Command should be:**
+```
+python -m uvicorn main:app --host 0.0.0.0 --port $PORT
+```
+
+### Step 5: Set Environment to Python
 
 **Environment:**
-- **Python Version**: `3.11.0`
+- Make sure it's set to **"Python"** (not Ruby!)
 
-### 3. Add Required Environment Variables
+### Step 6: Add Environment Variables
 
 Go to **"Environment"** tab and add:
 
 **Required:**
 ```
-ENVIRONMENT=production
 PYTHON_VERSION=3.11.0
+ENVIRONMENT=production
 ```
 
 **Database (if using PostgreSQL):**
 ```
-DATABASE_URL=[Your Render PostgreSQL URL]
+DATABASE_URL=[Your PostgreSQL URL]
 ```
-*Note: If you haven't added a database yet, see step 4*
 
-**API Keys:**
+**API Key:**
 ```
 GEMINI_API_KEY=[Your Gemini API Key]
 ```
 
-**Optional - Email Alerts:**
+### Step 7: Manual Redeploy
+
+After updating all settings:
+1. Click **"Manual Deploy"** button
+2. Select **"Deploy latest commit"**
+3. Wait for build (5-10 minutes)
+4. Check logs for success
+
+---
+
+## Alternative: Use render.yaml Blueprint
+
+If manual configuration is too complex, Render can use the `render.yaml` file in your repository:
+
+### Option A: Create New Service from Blueprint
+
+1. Go to Render Dashboard
+2. Click **"New +"** → **"Blueprint"**
+3. Connect your repository: `raga29429-blip/eye_lens`
+4. Render will automatically read `render.yaml`
+5. It will create:
+   - Backend service (with correct rootDir)
+   - Frontend service
+   - PostgreSQL database
+6. Click **"Apply"**
+
+This automatically configures everything correctly!
+
+---
+
+## Detailed Configuration Reference
+
+### Backend Service Configuration
+
+**Settings Tab:**
 ```
-SMTP_HOST=smtp.gmail.com
-SMTP_PORT=587
-SMTP_USERNAME=[Your Gmail]
-SMTP_PASSWORD=[Your App Password]
-SMTP_FROM_EMAIL=[Your Gmail]
-ALERT_RECIPIENT_EMAIL=[Recipient Email]
+Service Name: eluno-oms-backend
+Environment: Python
+Root Directory: backend          ← CRITICAL!
+Build Command: pip install --upgrade pip && pip install -r requirements.txt
+Start Command: python -m uvicorn main:app --host 0.0.0.0 --port $PORT
 ```
 
-**Optional - WhatsApp Alerts:**
+**Environment Tab:**
 ```
-TWILIO_ACCOUNT_SID=[Your Twilio SID]
-TWILIO_AUTH_TOKEN=[Your Twilio Token]
-TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
-ALERT_RECIPIENT_WHATSAPP=whatsapp:+[Your Number]
+PYTHON_VERSION=3.11.0
+ENVIRONMENT=production
+DATABASE_URL=${{Postgres.DATABASE_URL}}
+GEMINI_API_KEY=your_api_key_here
 ```
 
-### 4. Add PostgreSQL Database
-
-1. In Render Dashboard, click **"New +"** → **"PostgreSQL"**
-2. Name: `eluno-oms-db`
-3. Plan: **Free** (256 MB)
-4. Create Database
-5. Copy the **Internal Database URL**
-6. Go back to your web service → **"Environment"** tab
-7. Add variable: `DATABASE_URL` = [Paste the Internal Database URL]
-
-**Important:** Use the **Internal Database URL**, not the External one!
-
-### 5. Manual Redeploy
-
-After fixing settings:
-1. Go to your service
-2. Click **"Manual Deploy"** → **"Deploy latest commit"**
-3. Wait 5-10 minutes for build
-4. Check logs for errors
+**Advanced Tab:**
+```
+Python Version: 3.11.0
+Health Check Path: /
+Auto-Deploy: Yes
+```
 
 ---
 
